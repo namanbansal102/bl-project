@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+.nav-link {
+  @apply transition opacity-80 hover:opacity-100;
+}
+
+.bar {
+  @apply absolute left-1 w-6 h-0.5 bg-current transition-all duration-300;
+}
+

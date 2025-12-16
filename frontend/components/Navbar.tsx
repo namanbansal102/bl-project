@@ -2,6 +2,7 @@
 import { useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import ConnectWallet from './ConnectWallet';
 
 export default function Navbar() {
   useEffect(() => {
@@ -56,6 +57,9 @@ export default function Navbar() {
               placeholder="Search"
               className="search-input w-36 px-3 py-1.5 rounded-md text-xs bg-white/10 border border-white/20 placeholder-white/60 focus:outline-none focus:border-white/40 transition"
             />
+
+            {/* Connect Wallet Button */}
+            <ConnectWallet />
           </nav>
 
           {/* Mobile Toggle */}

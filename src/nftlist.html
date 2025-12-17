@@ -5,160 +5,428 @@
   <title>Mintverse – NFTs</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="output.css">
+  
+  <style>
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .float-anim { animation: float 3s ease-in-out infinite; }
+    .fade-in-up { animation: fadeInUp 0.6s ease-out; }
+    
+    .bg-orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.3;
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    .nft-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 2px;
+      background: linear-gradient(145deg, #6366f1, #8b5cf6, #ec4899);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+    
+    .nft-card:hover::before {
+      opacity: 1;
+    }
+    
+    .buy-btn {
+      transform: translateY(20px);
+      opacity: 0;
+      transition: all 0.4s ease;
+    }
+    
+    .nft-card:hover .buy-btn {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    select option {
+      background-color: #1e293b;
+      color: white;
+    }
+  </style>
 </head>
 
-<body class="bg-[#0b1020] text-white">
+<body class="bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white min-h-screen relative overflow-x-hidden">
 
-<!-- ================= HEADER ================= -->
-<header class="border-b border-white/10">
-  <div class="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
-     <div class="flex items-center gap-3 font-serif text-2xl">
-        <img
-          src="assets/logo.png"
-          alt="YourChain logo"
-          class="w-8 h-8 object-contain"
-        />
-        <span><a href="home.html" >Mintverse</a></span>
+  <!-- Animated Background Orbs -->
+  <div class="bg-orb w-96 h-96 bg-indigo-500 top-0 -left-48 float-anim"></div>
+  <div class="bg-orb w-96 h-96 bg-purple-500 bottom-0 -right-48 float-anim" style="animation-delay: -2s;"></div>
+  <div class="bg-orb w-80 h-80 bg-pink-500 top-1/2 left-1/2 float-anim" style="animation-delay: -4s;"></div>
+
+  <!-- ================= HEADER ================= -->
+  <header class="border-b border-white/10 backdrop-blur-xl bg-slate-900/60 relative z-20 sticky top-0">
+  <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+    
+    <!-- Logo -->
+    <div class="flex items-center gap-3 font-serif text-2xl">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-2xl">
+        🌟
       </div>
-    <div class="flex gap-3">
-      <button class="px-4 py-2 bg-white/10 rounded-lg">All NFTs</button>
-      <button class="px-4 py-2 bg-white/10 rounded-lg">Owned</button>
-      <!-- <button class="px-4 py-2 bg-white/10 rounded-lg">Listed</button> -->
-      <button class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20">
-        Listed
-      </button>
+      <span>
+        <a href="home.html" class="hover:text-indigo-400 transition-colors">
+          Mint<span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">Verse</span>
+        </a>
+      </span>
+    </div>
 
-      <select class="bg-white/10 px-4 py-2 rounded-lg text-sm">
-        <option class="text-black">Recently Minted</option>
-        <option class="text-black">Price: Low to High</option>
-        <option class="text-black">Price: High to Low</option>
+    <!-- Right Side: Stats, Filter Dropdown, Sort, Create -->
+    <div class="flex items-center gap-4">
+      
+      <!-- Quick Stats (hidden on mobile) -->
+      <div class="hidden lg:flex items-center gap-4 text-sm mr-2">
+        <div class="flex items-center gap-2">
+          <span class="text-white/50">Volume:</span>
+          <span class="font-bold text-indigo-400">840 ETH</span>
+        </div>
+        <div class="w-px h-4 bg-white/10"></div>
+        <div class="flex items-center gap-2">
+          <span class="text-white/50">Floor:</span>
+          <span class="font-bold text-purple-400">0.15 ETH</span>
+        </div>
+        <div class="w-px h-4 bg-white/10"></div>
+        <div class="flex items-center gap-2">
+          <span class="text-white/50">Items:</span>
+          <span class="font-bold text-pink-400">2,547</span>
+        </div>
+      </div>
+
+      <!-- Filter Dropdown -->
+      <div class="relative">
+        <button id="filterDropdown" class="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/15 rounded-lg font-medium transition-all text-sm border border-white/10">
+          <span id="selectedFilter">All NFTs</span>
+          <svg class="w-4 h-4 transition-transform duration-200" id="filterArrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        
+        <!-- Dropdown Menu -->
+        <div id="filterMenu" class="hidden absolute top-full mt-2 right-0 w-40 bg-slate-800/95 backdrop-blur-xl rounded-lg border border-white/10 shadow-xl overflow-hidden">
+          <button class="filter-option w-full px-4 py-2.5 text-left hover:bg-white/10 transition-colors text-sm font-medium border-b border-white/5">
+            All NFTs
+          </button>
+          <button class="filter-option w-full px-4 py-2.5 text-left hover:bg-white/10 transition-colors text-sm font-medium border-b border-white/5">
+            Owned
+          </button>
+          <button class="filter-option w-full px-4 py-2.5 text-left hover:bg-white/10 transition-colors text-sm font-medium">
+            Listed
+          </button>
+        </div>
+      </div>
+
+      <!-- Sort Dropdown -->
+      <select class="bg-white/10 text-white px-4 py-2 rounded-lg text-sm font-medium border border-white/10 hover:border-indigo-400 focus:border-indigo-400 focus:outline-none transition-all cursor-pointer">
+        <option value="recent">Recently Minted</option>
+        <option value="low">Price: Low to High</option>
+        <option value="high">Price: High to Low</option>
       </select>
+
+      <!-- Create Button -->
+      <a href="createnft.html" class="px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 transition-all font-medium shadow-lg hover:shadow-indigo-500/50 hover:scale-105 text-sm flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        Create
+      </a>
+
     </div>
   </div>
 </header>
 
-<!-- ================= NFT GRID ================= -->
-<section class="max-w-7xl mx-auto px-6 py-16">
-  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+  <!-- ================= MAIN CONTENT ================= -->
+  <main class="relative z-10">
+    <!-- Hero Section -->
+    <section class="max-w-7xl mx-auto px-6 py-12 text-center">
+      <h1 class="text-5xl md:text-6xl font-bold mb-4 shadow-indigo-500/50">
+        Explore <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">Unique</span> NFTs
+      </h1>
+      <p class="text-white/60 text-lg max-w-2xl mx-auto">
+        Discover, collect, and trade extraordinary digital assets on the blockchain
+      </p>
+    </section>
 
-    <!-- NFT CARD TEMPLATE (x10) -->
-    <!-- Use data-* to pass values to modal -->
+    <!-- ================= NFT GRID ================= -->
+    <section class="max-w-7xl mx-auto px-6 pb-16">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
 
-    <div class="nft-card" data-name="Mintverse #001" data-owner="0xA23...91D"
-         data-price="0.25 ETH"
-         data-img="https://the-nft-generator.com/images/design-services/carrousel/13.jpg">
-      <img src="https://the-nft-generator.com/images/design-services/carrousel/13.jpg" class="h-60 w-full object-cover rounded-t-2xl">
-      <div class="p-4 bg-[#12172f] rounded-b-2xl">
-        <h3 class="font-semibold">Mintverse #001</h3>
-        <p class="text-white/60 text-sm">0.25 ETH</p>
-        <button class="view-btn mt-3 w-full bg-indigo-600 py-2 rounded-lg">View</button>
+        <!-- NFT CARD 1 -->
+        <div class="nft-card relative rounded-2xl fade-in-up transition-all duration-500 bg-gradient-to-br from-slate-800/90 to-slate-900/80 backdrop-blur-xl border border-white/5 overflow-hidden hover:-translate-y-4 hover:scale-105 hover:shadow-2xl hover:shadow-indigo-500/30" style="animation-delay: 0.1s;">
+          <a href="nft-detail.html" class="block overflow-hidden rounded-t-2xl h-72 relative group">
+            <img src="https://the-nft-generator.com/images/design-services/carrousel/13.jpg" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 group-hover:rotate-2" alt="Mintverse #001">
+          </a>
+          
+          <div class="p-5 space-y-3">
+            <div class="flex items-start justify-between">
+              <div>
+                <h3 class="font-bold text-lg mb-1">Mintverse #001</h3>
+                <div class="inline-flex items-center gap-1.5 bg-white/5 px-3 py-1 rounded-full text-xs border border-white/10">
+                  <svg class="w-3 h-3 text-indigo-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                  </svg>
+                  <span class="text-white/70">0xA23...91D</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="bg-gradient-to-r from-indigo-500/20 to-purple-500/20 backdrop-blur-sm border border-indigo-500/30 p-3 rounded-xl flex items-center justify-between transition-all duration-300 hover:from-indigo-500/40 hover:to-purple-500/40 hover:border-indigo-500/60 hover:scale-105">
+              <span class="text-white/70 text-sm">Price</span>
+              <div class="flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-indigo-400" fill="currentColor" viewBox="0 0 320 512">
+                  <path d="M311.9 260.8L160 353.6 8 260.8 160 0l151.9 260.8zM160 383.4L8 290.6 160 512l152-221.4-152 92.8z"/>
+                </svg>
+                <span class="font-bold text-base">0.25 ETH</span>
+              </div>
+            </div>
+
+            <!-- Buy Button -->
+            <button class="buy-btn w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 font-semibold shadow-lg hover:shadow-indigo-500/50 hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              Buy Now
+            </button>
+          </div>
+        </div>
+
+        <!-- NFT CARD 2 -->
+        <div class="nft-card relative rounded-2xl fade-in-up transition-all duration-500 bg-gradient-to-br from-slate-800/90 to-slate-900/80 backdrop-blur-xl border border-white/5 overflow-hidden hover:-translate-y-4 hover:scale-105 hover:shadow-2xl hover:shadow-indigo-500/30" style="animation-delay: 0.2s;">
+          <a href="nft-detail.html" class="block overflow-hidden rounded-t-2xl h-72 relative group">
+            <img src="https://mir-s3-cdn-cf.behance.net/project_modules/1400/8f7b9c149661313.62eb722f93a89.png" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 group-hover:rotate-2" alt="Mintverse #002">
+          </a>
+          
+          <div class="p-5 space-y-3">
+            <div class="flex items-start justify-between">
+              <div>
+                <h3 class="font-bold text-lg mb-1">Mintverse #002</h3>
+                <div class="inline-flex items-center gap-1.5 bg-white/5 px-3 py-1 rounded-full text-xs border border-white/10">
+                  <svg class="w-3 h-3 text-indigo-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                  </svg>
+                  <span class="text-white/70">0xB12...EE4</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="bg-gradient-to-r from-indigo-500/20 to-purple-500/20 backdrop-blur-sm border border-indigo-500/30 p-3 rounded-xl flex items-center justify-between transition-all duration-300 hover:from-indigo-500/40 hover:to-purple-500/40 hover:border-indigo-500/60 hover:scale-105">
+              <span class="text-white/70 text-sm">Price</span>
+              <div class="flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-indigo-400" fill="currentColor" viewBox="0 0 320 512">
+                  <path d="M311.9 260.8L160 353.6 8 260.8 160 0l151.9 260.8zM160 383.4L8 290.6 160 512l152-221.4-152 92.8z"/>
+                </svg>
+                <span class="font-bold text-base">0.18 ETH</span>
+              </div>
+            </div>
+
+            <button class="buy-btn w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 font-semibold shadow-lg hover:shadow-indigo-500/50 hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              Buy Now
+            </button>
+          </div>
+        </div>
+
+        <!-- NFT CARD 3 -->
+        <div class="nft-card relative rounded-2xl fade-in-up transition-all duration-500 bg-gradient-to-br from-slate-800/90 to-slate-900/80 backdrop-blur-xl border border-white/5 overflow-hidden hover:-translate-y-4 hover:scale-105 hover:shadow-2xl hover:shadow-indigo-500/30" style="animation-delay: 0.3s;">
+          <a href="nft-detail.html" class="block overflow-hidden rounded-t-2xl h-72 relative group">
+            <img src="https://images.unsplash.com/photo-1620121684840-edffcfc4b878" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 group-hover:rotate-2" alt="Mintverse #003">
+          </a>
+          
+          <div class="p-5 space-y-3">
+            <div class="flex items-start justify-between">
+              <div>
+                <h3 class="font-bold text-lg mb-1">Mintverse #003</h3>
+                <div class="inline-flex items-center gap-1.5 bg-white/5 px-3 py-1 rounded-full text-xs border border-white/10">
+                  <svg class="w-3 h-3 text-indigo-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                  </svg>
+                  <span class="text-white/70">0xB12...EE4</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="bg-gradient-to-r from-indigo-500/20 to-purple-500/20 backdrop-blur-sm border border-indigo-500/30 p-3 rounded-xl flex items-center justify-between transition-all duration-300 hover:from-indigo-500/40 hover:to-purple-500/40 hover:border-indigo-500/60 hover:scale-105">
+              <span class="text-white/70 text-sm">Price</span>
+              <div class="flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-indigo-400" fill="currentColor" viewBox="0 0 320 512">
+                  <path d="M311.9 260.8L160 353.6 8 260.8 160 0l151.9 260.8zM160 383.4L8 290.6 160 512l152-221.4-152 92.8z"/>
+                </svg>
+                <span class="font-bold text-base">0.22 ETH</span>
+              </div>
+            </div>
+
+            <button class="buy-btn w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 font-semibold shadow-lg hover:shadow-indigo-500/50 hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              Buy Now
+            </button>
+          </div>
+        </div>
+
+        <!-- NFT CARD 4 -->
+        <div class="nft-card relative rounded-2xl fade-in-up transition-all duration-500 bg-gradient-to-br from-slate-800/90 to-slate-900/80 backdrop-blur-xl border border-white/5 overflow-hidden hover:-translate-y-4 hover:scale-105 hover:shadow-2xl hover:shadow-indigo-500/30" style="animation-delay: 0.4s;">
+          <a href="nft-detail.html" class="block overflow-hidden rounded-t-2xl h-72 relative group">
+            <img src="https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 group-hover:rotate-2" alt="Mintverse #004">
+          </a>
+          
+          <div class="p-5 space-y-3">
+            <div class="flex items-start justify-between">
+              <div>
+                <h3 class="font-bold text-lg mb-1">Mintverse #004</h3>
+                <div class="inline-flex items-center gap-1.5 bg-white/5 px-3 py-1 rounded-full text-xs border border-white/10">
+                  <svg class="w-3 h-3 text-indigo-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                  </svg>
+                  <span class="text-white/70">0xC44...99A</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="bg-gradient-to-r from-indigo-500/20 to-purple-500/20 backdrop-blur-sm border border-indigo-500/30 p-3 rounded-xl flex items-center justify-between transition-all duration-300 hover:from-indigo-500/40 hover:to-purple-500/40 hover:border-indigo-500/60 hover:scale-105">
+              <span class="text-white/70 text-sm">Price</span>
+              <div class="flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-indigo-400" fill="currentColor" viewBox="0 0 320 512">
+                  <path d="M311.9 260.8L160 353.6 8 260.8 160 0l151.9 260.8zM160 383.4L8 290.6 160 512l152-221.4-152 92.8z"/>
+                </svg>
+                <span class="font-bold text-base">0.30 ETH</span>
+              </div>
+            </div>
+
+            <button class="buy-btn w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 font-semibold shadow-lg hover:shadow-indigo-500/50 hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              Buy Now
+            </button>
+          </div>
+        </div>
+
+        <!-- NFT CARD 5 -->
+        <div class="nft-card relative rounded-2xl fade-in-up transition-all duration-500 bg-gradient-to-br from-slate-800/90 to-slate-900/80 backdrop-blur-xl border border-white/5 overflow-hidden hover:-translate-y-4 hover:scale-105 hover:shadow-2xl hover:shadow-indigo-500/30" style="animation-delay: 0.5s;">
+          <a href="nft-detail.html" class="block overflow-hidden rounded-t-2xl h-72 relative group">
+            <img src="https://images.unsplash.com/photo-1634973357973-f2ed2657db3c" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 group-hover:rotate-2" alt="Mintverse #005">
+          </a>
+          
+          <div class="p-5 space-y-3">
+            <div class="flex items-start justify-between">
+              <div>
+                <h3 class="font-bold text-lg mb-1">Mintverse #005</h3>
+                <div class="inline-flex items-center gap-1.5 bg-white/5 px-3 py-1 rounded-full text-xs border border-white/10">
+                  <svg class="w-3 h-3 text-indigo-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                  </svg>
+                  <span class="text-white/70">0xDD9...77A</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="bg-gradient-to-r from-indigo-500/20 to-purple-500/20 backdrop-blur-sm border border-indigo-500/30 p-3 rounded-xl flex items-center justify-between transition-all duration-300 hover:from-indigo-500/40 hover:to-purple-500/40 hover:border-indigo-500/60 hover:scale-105">
+              <span class="text-white/70 text-sm">Price</span>
+              <div class="flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-indigo-400" fill="currentColor" viewBox="0 0 320 512">
+                  <path d="M311.9 260.8L160 353.6 8 260.8 160 0l151.9 260.8zM160 383.4L8 290.6 160 512l152-221.4-152 92.8z"/>
+                </svg>
+                <span class="font-bold text-base">0.45 ETH</span>
+              </div>
+            </div>
+
+            <button class="buy-btn w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 font-semibold shadow-lg hover:shadow-indigo-500/50 hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              Buy Now
+            </button>
+          </div>
+        </div>
+
       </div>
-    </div>
+    </section>
+  </main>
 
-    
-    <div class="nft-card" data-name="Mintverse #002" data-owner="0xB12...EE4"
-         data-price="0.18 ETH"
-         data-img="https://mir-s3-cdn-cf.behance.net/project_modules/1400/8f7b9c149661313.62eb722f93a89.png">
-      <img src="https://mir-s3-cdn-cf.behance.net/project_modules/1400/8f7b9c149661313.62eb722f93a89.png" class="h-60 w-full object-cover rounded-t-2xl">
-      <div class="p-4 bg-[#12172f] rounded-b-2xl">
-        <h3 class="font-semibold">Mintverse #002</h3>
-        <p class="text-white/60 text-sm">0.18 ETH</p>
-        <button class="view-btn mt-3 w-full bg-indigo-600 py-2 rounded-lg">View</button>
-      </div>
-    </div>
+  <!-- ================= SCRIPT ================= -->
+   <script>
+  // Filter Dropdown Toggle
+  const filterDropdown = document.getElementById('filterDropdown');
+  const filterMenu = document.getElementById('filterMenu');
+  const filterArrow = document.getElementById('filterArrow');
+  const selectedFilter = document.getElementById('selectedFilter');
+  const filterOptions = document.querySelectorAll('.filter-option');
 
-    <div class="nft-card" data-name="Mintverse #002" data-owner="0xB12...EE4"
-         data-price="0.18 ETH"
-         data-img="https://images.unsplash.com/photo-1620121684840-edffcfc4b878">
-      <img src="https://images.unsplash.com/photo-1620121684840-edffcfc4b878" class="h-60 w-full object-cover rounded-t-2xl">
-      <div class="p-4 bg-[#12172f] rounded-b-2xl">
-        <h3 class="font-semibold">Mintverse #002</h3>
-        <p class="text-white/60 text-sm">0.18 ETH</p>
-        <button class="view-btn mt-3 w-full bg-indigo-600 py-2 rounded-lg">View</button>
-      </div>
-    </div>
-
-    <!-- 3–10 (shortened but real) -->
-    <!-- You can change images if you want -->
-    <!-- I'll add remaining quickly -->
-
-    <!-- Repeat pattern -->
-    <!-- 3 -->
-    <div class="nft-card" data-name="Mintverse #003" data-owner="0xC44...99A"
-         data-price="0.30 ETH"
-         data-img="https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead">
-      <img src="https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead" class="h-60 w-full object-cover rounded-t-2xl">
-      <div class="p-4 bg-[#12172f] rounded-b-2xl">
-        <h3 class="font-semibold">Mintverse #003</h3>
-        <p class="text-white/60 text-sm">0.30 ETH</p>
-        <button class="view-btn mt-3 w-full bg-indigo-600 py-2 rounded-lg">View</button>
-      </div>
-    </div>
-
-    <!-- 4 -->
-    <div class="nft-card" data-name="Mintverse #004" data-owner="0xDD9...77A"
-         data-price="0.45 ETH"
-         data-img="https://images.unsplash.com/photo-1634973357973-f2ed2657db3c">
-      <img src="https://images.unsplash.com/photo-1634973357973-f2ed2657db3c" class="h-60 w-full object-cover rounded-t-2xl">
-      <div class="p-4 bg-[#12172f] rounded-b-2xl">
-        <h3 class="font-semibold">Mintverse #004</h3>
-        <p class="text-white/60 text-sm">0.45 ETH</p>
-        <button class="view-btn mt-3 w-full bg-indigo-600 py-2 rounded-lg">View</button>
-      </div>
-    </div>
-
-    <!-- Duplicate to make total 10 -->
-    <!-- For demo, copy any card -->
-
-  </div>
-</section>
-
-<!-- ================= MODAL ================= -->
-<div id="modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50">
-  <div class="bg-[#12172f] rounded-2xl max-w-md w-full p-6 relative">
-
-    <button onclick="closeModal()" class="absolute top-4 right-4 text-xl">✕</button>
-
-    <img id="modalImg" class="h-64 w-full object-cover rounded-xl mb-4">
-
-    <h2 id="modalName" class="text-2xl font-semibold"></h2>
-    <p id="modalOwner" class="text-white/60 text-sm mt-1"></p>
-    <p id="modalPrice" class="mt-3 font-medium"></p>
-
-    <div class="flex gap-3 mt-6">
-      <button class="flex-1 bg-indigo-600 py-2 rounded-lg">Transfer</button>
-      <button class="flex-1 bg-red-600 py-2 rounded-lg">Burn</button>
-      <button class="flex-1 bg-emerald-600 py-2 rounded-lg">Sell</button>
-    </div>
-
-  </div>
-</div>
-
-<!-- ================= SCRIPT ================= -->
-<script>
-  const modal = document.getElementById("modal");
-  const modalImg = document.getElementById("modalImg");
-  const modalName = document.getElementById("modalName");
-  const modalOwner = document.getElementById("modalOwner");
-  const modalPrice = document.getElementById("modalPrice");
-
-  document.querySelectorAll(".view-btn").forEach(btn => {
-    btn.addEventListener("click", e => {
-      const card = e.target.closest(".nft-card");
-      modalImg.src = card.dataset.img;
-      modalName.textContent = card.dataset.name;
-      modalOwner.textContent = "Owner: " + card.dataset.owner;
-      modalPrice.textContent = "Price: " + card.dataset.price;
-      modal.classList.remove("hidden");
-      modal.classList.add("flex");
-    });
+  filterDropdown.addEventListener('click', () => {
+    filterMenu.classList.toggle('hidden');
+    filterArrow.classList.toggle('rotate-180');
   });
 
-  function closeModal() {
-    modal.classList.add("hidden");
-    modal.classList.remove("flex");
-  }
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!filterDropdown.contains(e.target) && !filterMenu.contains(e.target)) {
+      filterMenu.classList.add('hidden');
+      filterArrow.classList.remove('rotate-180');
+    }
+  });
+
+  // Handle filter selection
+  filterOptions.forEach(option => {
+    option.addEventListener('click', () => {
+      selectedFilter.textContent = option.textContent;
+      filterMenu.classList.add('hidden');
+      filterArrow.classList.remove('rotate-180');
+      
+      // Remove active state from all options
+      filterOptions.forEach(opt => opt.classList.remove('bg-indigo-500/20'));
+      // Add active state to selected option
+      option.classList.add('bg-indigo-500/20');
+    });
+  });
 </script>
+  <script>
+    // Filter button functionality
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterBtns.forEach(b => {
+          b.classList.remove('bg-gradient-to-r', 'from-indigo-600', 'to-purple-600');
+          b.classList.add('bg-white/10', 'hover:bg-white/20');
+        });
+        btn.classList.remove('bg-white/10', 'hover:bg-white/20');
+        btn.classList.add('bg-gradient-to-r', 'from-indigo-600', 'to-purple-600');
+      });
+    });
+
+    // Add click handlers for buy buttons
+    document.querySelectorAll('.buy-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        console.log('Buy NFT clicked');
+        // Add your buy logic here
+      });
+    });
+  </script>
 
 </body>
 </html>

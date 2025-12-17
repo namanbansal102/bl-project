@@ -1,0 +1,384 @@
+'use client';
+import { useState } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+
+export default function CreateNFT() {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    title: '',
+    price: '',
+    description: '',
+    royalties: ''
+  });
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    }
+  };
+
+  const removeImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPreviewUrl(null);
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    if (fileInput) fileInput.value = '';
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleSubmit = () => {
+    console.log('Minting NFT...', formData);
+    // Add your mint logic here
+  };
+
+  return (
+    <div className="bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white min-h-screen overflow-x-hidden relative">
+      <style jsx global>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-20px) rotate(5deg); }
+        }
+        
+        @keyframes floatSlow {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-15px) rotate(-3deg); }
+        }
+        
+        @keyframes glow {
+          0%, 100% { opacity: 0.5; }
+          50% { opacity: 1; }
+        }
+        
+        @keyframes shimmer {
+          0% { background-position: -1000px 0; }
+          100% { background-position: 1000px 0; }
+        }
+        
+        @keyframes spin-slow {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        
+        .float-anim { animation: float 6s ease-in-out infinite; }
+        .float-slow { animation: floatSlow 8s ease-in-out infinite; }
+        .glow-anim { animation: glow 3s ease-in-out infinite; }
+        .spin-slow { animation: spin-slow 20s linear infinite; }
+        
+        .gradient-border {
+          position: relative;
+          background: linear-gradient(145deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+          backdrop-filter: blur(10px);
+        }
+        
+        .gradient-border::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          padding: 2px;
+          background: linear-gradient(145deg, #6366f1, #8b5cf6, #6366f1);
+          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          -webkit-mask-composite: xor;
+          mask-composite: exclude;
+          opacity: 0.5;
+        }
+        
+        .shimmer-effect {
+          background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.3), transparent);
+          background-size: 1000px 100%;
+          animation: shimmer 3s infinite;
+        }
+        
+        .glass-card {
+          background: rgba(15, 23, 42, 0.6);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .glow-box {
+          box-shadow: 0 0 30px rgba(99, 102, 241, 0.3), 0 0 60px rgba(139, 92, 246, 0.2);
+        }
+        
+        input:focus, textarea:focus {
+          box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+        }
+        
+        .bg-orb {
+          position: fixed;
+          border-radius: 50%;
+          filter: blur(80px);
+          opacity: 0.4;
+          pointer-events: none;
+          z-index: 0;
+        }
+        
+        .sticker {
+          position: absolute;
+        }
+      `}</style>
+
+      {/* Animated Background Orbs */}
+      <div className="bg-orb w-96 h-96 bg-indigo-500 top-0 left-0 float-anim"></div>
+      <div className="bg-orb w-96 h-96 bg-purple-500 bottom-0 right-0 float-anim" style={{animationDelay: '-3s'}}></div>
+      
+      {/* NFT Stickers / Floating Elements */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{zIndex: 1}}>
+        <div className="sticker top-20 left-10 w-16 h-16 float-anim opacity-40">
+          <div className="w-full h-full bg-gradient-to-br from-indigo-400 to-purple-500 rounded-lg transform rotate-12 flex items-center justify-center text-2xl">
+            💎
+          </div>
+        </div>
+        
+        <div className="sticker top-40 right-20 w-20 h-20 float-slow opacity-30" style={{animationDelay: '-2s'}}>
+          <div className="w-full h-full bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center text-3xl">
+            🎨
+          </div>
+        </div>
+        
+        <div className="sticker bottom-32 left-1/4 w-14 h-14 float-anim opacity-40" style={{animationDelay: '-4s'}}>
+          <div className="w-full h-full bg-gradient-to-br from-cyan-400 to-indigo-500 rounded-lg transform -rotate-12 flex items-center justify-center text-2xl">
+            🖼️
+          </div>
+        </div>
+        
+        <div className="sticker top-1/3 right-10 w-12 h-12 float-slow opacity-30" style={{animationDelay: '-1s'}}>
+          <div className="w-full h-full bg-gradient-to-br from-pink-400 to-rose-500 rounded-full flex items-center justify-center text-xl">
+            ✨
+          </div>
+        </div>
+        
+        <div className="sticker bottom-40 right-1/4 w-16 h-16 float-anim opacity-40" style={{animationDelay: '-5s'}}>
+          <div className="w-full h-full bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg transform rotate-45 flex items-center justify-center text-2xl">
+            🚀
+          </div>
+        </div>
+        
+        <div className="sticker top-1/2 left-16 w-14 h-14 float-slow opacity-30" style={{animationDelay: '-3s'}}>
+          <div className="w-full h-full border-4 border-indigo-400 rounded-lg transform rotate-12 spin-slow"></div>
+        </div>
+        
+        <div className="sticker top-96 right-1/3 w-10 h-10 float-anim opacity-40" style={{animationDelay: '-6s'}}>
+          <div className="w-full h-full bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center text-lg">
+            💰
+          </div>
+        </div>
+        
+        <div className="sticker bottom-20 left-1/3 w-12 h-12 float-slow opacity-30" style={{animationDelay: '-2.5s'}}>
+          <div className="w-full h-full bg-gradient-to-br from-violet-400 to-fuchsia-500 rounded-lg flex items-center justify-center text-xl">
+            🎭
+          </div>
+        </div>
+      </div>
+      
+      {/* Header */}
+      <header className="relative z-20 flex items-center justify-between px-8 py-6 border-b border-white/10 glass-card">
+        <Link href="/" className="text-3xl font-bold tracking-tight flex items-center gap-2">
+          <span className="text-2xl">🌟</span>
+          Mint<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">Verse</span>
+        </Link>
+        <button className="group relative px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 transition-all duration-300 font-medium shadow-lg hover:shadow-indigo-500/50 transform hover:scale-105">
+          <span className="relative z-10">Connect Wallet</span>
+          <div className="absolute inset-0 rounded-xl bg-white opacity-0 group-hover:opacity-20 transition-opacity"></div>
+        </button>
+      </header>
+
+      {/* Main */}
+      <main className="relative z-20 max-w-7xl mx-auto px-8 py-12">
+        {/* Title Section */}
+        <div className="mb-12 text-center relative">
+          <h1 className="text-5xl md:text-6xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white via-indigo-200 to-purple-200">
+            Create Your NFT
+          </h1>
+          <p className="text-white/60 text-lg">Mint your digital masterpiece on the blockchain</p>
+          <div className="mt-4 h-1 w-32 mx-auto bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"></div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+          {/* Upload Section */}
+          <div className="relative">
+            <div className={`gradient-border relative rounded-3xl flex items-center justify-center p-10 text-center hover:scale-[1.02] transition-all duration-500 cursor-pointer overflow-hidden h-[480px] group ${previewUrl ? 'glow-box' : ''}`}>
+              <div className="shimmer-effect absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+              {/* Image Preview */}
+              {previewUrl && (
+                <img
+                  src={previewUrl}
+                  className="absolute inset-0 w-full h-full object-cover rounded-3xl"
+                  alt="NFT Preview"
+                />
+              )}
+
+              {/* Remove Image Button */}
+              {previewUrl && (
+                <button
+                  onClick={removeImage}
+                  className="absolute top-4 right-4 z-20 bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white rounded-full w-10 h-10 flex items-center justify-center shadow-lg transform hover:scale-110 transition-all duration-300"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+
+              {/* Upload Content */}
+              {!previewUrl && (
+                <div className="z-10 relative">
+                  <div className="mb-6 relative inline-block">
+                    <div className="absolute inset-0 bg-indigo-500 rounded-full blur-xl opacity-50 glow-anim"></div>
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                      className="h-16 w-16 text-indigo-400 relative"
+                      fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                  </div>
+
+                  <p className="text-2xl font-semibold mb-2">Drop your NFT here</p>
+                  <p className="text-white/60 mb-4">or click to browse</p>
+                  
+                  <div className="flex items-center justify-center gap-2 text-sm text-white/50">
+                    <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">PNG</span>
+                    <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">JPG</span>
+                    <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">GIF</span>
+                    <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">SVG</span>
+                  </div>
+                  <p className="text-xs text-white/40 mt-3">Maximum file size: 50MB</p>
+                </div>
+              )}
+
+              {/* File Input */}
+              <input
+                type="file"
+                accept="image/*"
+                className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                onChange={handleFileChange}
+              />
+            </div>
+            
+            {/* Stats Below Upload */}
+            <div className="grid grid-cols-3 gap-4 mt-6 relative">
+              <div className="glass-card rounded-2xl p-4 text-center">
+                <p className="text-2xl font-bold text-indigo-400">2.5K</p>
+                <p className="text-xs text-white/60 mt-1">NFTs Created</p>
+              </div>
+              <div className="glass-card rounded-2xl p-4 text-center">
+                <p className="text-2xl font-bold text-purple-400">1.2K</p>
+                <p className="text-xs text-white/60 mt-1">Artists</p>
+              </div>
+              <div className="glass-card rounded-2xl p-4 text-center">
+                <p className="text-2xl font-bold text-pink-400">840</p>
+                <p className="text-xs text-white/60 mt-1">ETH Volume</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Form Section */}
+          <div className="space-y-6 relative">
+            <div className="glass-card rounded-2xl p-6 transform hover:scale-[1.01] transition-all duration-300">
+              <label className="block text-sm mb-3 font-medium text-white/80 flex items-center gap-2">
+                <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                </svg>
+                NFT Title *
+              </label>
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleInputChange}
+                placeholder="Enter an epic title"
+                className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-3.5 focus:outline-none focus:border-indigo-400 transition-all duration-300 placeholder:text-white/30"
+              />
+            </div>
+
+            <div className="glass-card rounded-2xl p-6 transform hover:scale-[1.01] transition-all duration-300">
+              <label className="block text-sm mb-3 font-medium text-white/80 flex items-center gap-2">
+                <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Price (ETH) *
+              </label>
+              <div className="relative">
+                <input
+                  type="number"
+                  name="price"
+                  value={formData.price}
+                  onChange={handleInputChange}
+                  step="0.0001"
+                  placeholder="0.00"
+                  className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-3.5 focus:outline-none focus:border-indigo-400 transition-all duration-300 placeholder:text-white/30 pr-16"
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 font-medium">ETH</span>
+              </div>
+            </div>
+
+            <div className="glass-card rounded-2xl p-6 transform hover:scale-[1.01] transition-all duration-300">
+              <label className="block text-sm mb-3 font-medium text-white/80 flex items-center gap-2">
+                <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h7" />
+                </svg>
+                Description
+              </label>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                rows={4}
+                placeholder="Tell the story behind your NFT..."
+                className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-3.5 focus:outline-none focus:border-indigo-400 transition-all duration-300 placeholder:text-white/30 resize-none"
+              ></textarea>
+            </div>
+
+            <div className="glass-card rounded-2xl p-6 transform hover:scale-[1.01] transition-all duration-300">
+              <label className="block text-sm mb-3 font-medium text-white/80 flex items-center gap-2">
+                <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Royalties (%)
+              </label>
+              <input
+                type="number"
+                name="royalties"
+                value={formData.royalties}
+                onChange={handleInputChange}
+                placeholder="5"
+                min="0"
+                max="50"
+                className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-3.5 focus:outline-none focus:border-indigo-400 transition-all duration-300 placeholder:text-white/30"
+              />
+              <p className="text-xs text-white/40 mt-2">Suggested: 5-10%</p>
+            </div>
+
+            <button 
+              onClick={handleSubmit}
+              className="group relative w-full py-4 rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 transition-all duration-500 font-semibold text-lg shadow-2xl hover:shadow-indigo-500/50 transform hover:scale-[1.02] overflow-hidden glow-box"
+            >
+              <span className="relative z-10 flex items-center justify-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Mint NFT
+              </span>
+              <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-500"></div>
+            </button>
+
+            <div className="flex items-center gap-2 justify-center text-xs text-white/40 bg-white/5 rounded-xl p-3 border border-white/10">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Once minted, NFT details cannot be changed
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}

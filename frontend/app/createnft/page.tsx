@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
@@ -383,14 +382,3 @@ export default function CreateNFT() {
     </div>
   );
 }
-=======
-import React from 'react'
-
-const page = () => {
-  return (
-    <div>page</div>
-  )
-} 
-
-export default page
->>>>>>> 1959058f45201c1501eb5aa7618f430912d04a16

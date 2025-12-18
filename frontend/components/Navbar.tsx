@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import ConnectWallet from './ConnectWallet';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 
 export default function Navbar() {
   useEffect(() => {
@@ -46,8 +46,8 @@ export default function Navbar() {
 
           {/* Desktop Nav */}
           <nav className="hidden lg:flex items-center gap-8 text-sm font-medium">
-            <Link href="#" className="nav-link">Network</Link>
-            <Link href="#" className="nav-link">Use Cases</Link>
+            <Link href="/listnft" className="nav-link">NFT's</Link>
+            <Link href="/createnft" className="nav-link">Create NFT</Link>
             <Link href="/nftlist" className="nav-link">Items</Link>
             <Link href="#" className="nav-link underline underline-offset-4">Quickstart</Link>
 
@@ -59,7 +59,7 @@ export default function Navbar() {
             />
 
             {/* Connect Wallet Button */}
-            <ConnectWallet />
+            <ConnectButton></ConnectButton>
           </nav>
 
           {/* Mobile Toggle */}

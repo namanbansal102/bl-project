@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Providers } from "@/components/providers";
 import "./globals.css";
-import { Web3Provider } from "@/components/Web3Provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,10 +13,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Mintverse - NFT Marketplace",
-  description: "The trust layer for the decentralized economy",
-};
+
 
 export default function RootLayout({
   children,
@@ -24,13 +21,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning className="scroll-smooth">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Web3Provider>
+        <Providers>
           {children}
-        </Web3Provider>
+        </Providers>
       </body>
     </html>
   );

@@ -2,6 +2,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { parseEther } from 'viem';
+import { NFT_CONTRACT_ADDRESS, NFT_CONTRACT_ABI } from '@/lib/contract';
 
 export default function CreateNFT() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -10,6 +13,15 @@ export default function CreateNFT() {
     price: '',
     description: '',
     royalties: ''
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  const { address, isConnected } = useAccount();
+  const { writeContract, data: hash, isPending } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash,
   });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -34,10 +46,83 @@ export default function CreateNFT() {
     });
   };
 
-  const handleSubmit = () => {
-    console.log('Minting NFT...', formData);
-    // Add your mint logic here
+  const handleSubmit = async () => {
+    setError(null);
+    setSuccess(null);
+
+    // Validation
+    if (!isConnected) {
+      setError('Please connect your wallet first');
+      return;
+    }
+
+    if (!formData.title || !formData.price || !formData.description) {
+      setError('Please fill in all required fields (Title, Price, Description)');
+      return;
+    }
+
+    if (!previewUrl) {
+      setError('Please upload an image for your NFT');
+      return;
+    }
+
+    const priceNum = parseFloat(formData.price);
+    if (isNaN(priceNum) || priceNum <= 0) {
+      setError('Please enter a valid price greater than 0');
+      return;
+    }
+
+    const royaltiesNum = parseFloat(formData.royalties || '0');
+    if (isNaN(royaltiesNum) || royaltiesNum < 0 || royaltiesNum > 100) {
+      setError('Royalties must be between 0 and 100');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      // For now, use a dummy image hash
+      // TODO: Integrate Pinata storage later
+      const dummyImageHash = `ipfs://dummy-hash-${Date.now()}`;
+      
+      const priceInWei = parseEther(formData.price);
+
+      // Call the createNFT function
+      writeContract({
+        address: NFT_CONTRACT_ADDRESS,
+        abi: NFT_CONTRACT_ABI,
+        functionName: 'createNFT',
+        args: [
+          formData.title,
+          formData.description,
+          dummyImageHash,
+          priceInWei,
+          BigInt(royaltiesNum)
+        ],
+        value: priceInWei, // Send the price as value
+      });
+
+      setSuccess('NFT creation transaction submitted! Waiting for confirmation...');
+    } catch (err: any) {
+      console.error('Error creating NFT:', err);
+      setError(err?.message || 'Failed to create NFT. Please try again.');
+      setIsLoading(false);
+    }
   };
+
+  // Handle transaction confirmation
+  if (isConfirmed && isLoading) {
+    setIsLoading(false);
+    setSuccess('NFT created successfully! 🎉');
+    // Reset form
+    setFormData({
+      title: '',
+      price: '',
+      description: '',
+      royalties: ''
+    });
+    setPreviewUrl(null);
+  }
 
   return (
     <div className="bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white min-h-screen overflow-x-hidden relative">
@@ -184,10 +269,14 @@ export default function CreateNFT() {
           <span className="text-2xl">🌟</span>
           Mint<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">Verse</span>
         </Link>
-        <button className="group relative px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 transition-all duration-300 font-medium shadow-lg hover:shadow-indigo-500/50 transform hover:scale-105">
-          <span className="relative z-10">Connect Wallet</span>
-          <div className="absolute inset-0 rounded-xl bg-white opacity-0 group-hover:opacity-20 transition-opacity"></div>
-        </button>
+        <div className="flex items-center gap-4">
+          {isConnected && address && (
+            <div className="text-sm text-white/60 bg-white/5 px-4 py-2 rounded-lg border border-white/10">
+              {address.slice(0, 6)}...{address.slice(-4)}
+            </div>
+          )}
+          <w3m-button />
+        </div>
       </header>
 
       {/* Main */}
@@ -283,7 +372,7 @@ export default function CreateNFT() {
           {/* Form Section */}
           <div className="space-y-6 relative">
             <div className="glass-card rounded-2xl p-6 transform hover:scale-[1.01] transition-all duration-300">
-              <label className="block text-sm mb-3 font-medium text-white/80 flex items-center gap-2">
+              <label className="text-sm mb-3 font-medium text-white/80 flex items-center gap-2">
                 <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                 </svg>
@@ -300,7 +389,7 @@ export default function CreateNFT() {
             </div>
 
             <div className="glass-card rounded-2xl p-6 transform hover:scale-[1.01] transition-all duration-300">
-              <label className="block text-sm mb-3 font-medium text-white/80 flex items-center gap-2">
+              <label className="text-sm mb-3 font-medium text-white/80 flex items-center gap-2">
                 <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -321,7 +410,7 @@ export default function CreateNFT() {
             </div>
 
             <div className="glass-card rounded-2xl p-6 transform hover:scale-[1.01] transition-all duration-300">
-              <label className="block text-sm mb-3 font-medium text-white/80 flex items-center gap-2">
+              <label className="text-sm mb-3 font-medium text-white/80 flex items-center gap-2">
                 <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h7" />
                 </svg>
@@ -338,7 +427,7 @@ export default function CreateNFT() {
             </div>
 
             <div className="glass-card rounded-2xl p-6 transform hover:scale-[1.01] transition-all duration-300">
-              <label className="block text-sm mb-3 font-medium text-white/80 flex items-center gap-2">
+              <label className="text-sm mb-3 font-medium text-white/80 flex items-center gap-2">
                 <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
@@ -359,16 +448,67 @@ export default function CreateNFT() {
 
             <button 
               onClick={handleSubmit}
-              className="group relative w-full py-4 rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 transition-all duration-500 font-semibold text-lg shadow-2xl hover:shadow-indigo-500/50 transform hover:scale-[1.02] overflow-hidden glow-box"
+              disabled={!isConnected || isLoading || isPending || isConfirming}
+              className="group relative w-full py-4 rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 transition-all duration-500 font-semibold text-lg shadow-2xl hover:shadow-indigo-500/50 transform hover:scale-[1.02] overflow-hidden glow-box disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
               <span className="relative z-10 flex items-center justify-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                Mint NFT
+                {isLoading || isPending || isConfirming ? (
+                  <>
+                    <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    {isPending ? 'Confirm in Wallet...' : isConfirming ? 'Minting...' : 'Processing...'}
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    {isConnected ? 'Mint NFT' : 'Connect Wallet to Mint'}
+                  </>
+                )}
               </span>
               <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-500"></div>
             </button>
+
+            {/* Status Messages */}
+            {error && (
+              <div className="flex items-start gap-3 text-sm bg-red-500/10 border border-red-500/30 rounded-xl p-4">
+                <svg className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-red-200">{error}</span>
+              </div>
+            )}
+
+            {success && (
+              <div className="flex items-start gap-3 text-sm bg-green-500/10 border border-green-500/30 rounded-xl p-4">
+                <svg className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-green-200">{success}</span>
+              </div>
+            )}
+
+            {hash && (
+              <div className="flex items-start gap-3 text-sm bg-indigo-500/10 border border-indigo-500/30 rounded-xl p-4">
+                <svg className="w-5 h-5 text-indigo-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="flex-1">
+                  <p className="text-indigo-200 mb-1">Transaction Hash:</p>
+                  <a 
+                    href={`https://explorer.testnet.soniclabs.com/tx/${hash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-indigo-400 hover:text-indigo-300 font-mono text-xs break-all underline"
+                  >
+                    {hash}
+                  </a>
+                </div>
+              </div>
+            )}
 
             <div className="flex items-center gap-2 justify-center text-xs text-white/40 bg-white/5 rounded-xl p-3 border border-white/10">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

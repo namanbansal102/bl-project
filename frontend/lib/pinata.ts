@@ -6,9 +6,31 @@ import { PinataSDK } from "pinata"
 
 function createPinataClient() {
   return new PinataSDK({
-    pinataJwt: process.env.NEXT_PUBLIC_PINATA_JWT!,
+    pinataJwt: process.env.NEXT_PUBLIC_PINATA_KEY!,
     pinataGateway: "example-gateway.mypinata.cloud",
   })
+}
+
+export async function fetchImageUrl(cid: string): Promise<string> {
+  console.log("my cid is::",cid);
+  
+  const pinata = new PinataSDK({
+    pinataJwt: process.env.NEXT_PUBLIC_PINATA_KEY!,
+    pinataGateway: "jade-added-egret-280.mypinata.cloud",
+  });
+  
+  try {
+    const url = await pinata.gateways.createSignedURL({
+      gateway: "jade-added-egret-280.mypinata.cloud",
+      cid: cid,
+      expires: 1800000000000,
+    });
+    console.log("Pinata Signed URL:", url);
+    return url;
+  } catch (error) {
+    console.error("Error fetching image URL from Pinata:", error);
+    return "";
+  }
 }
 
 export async function uploadJSONToIPFS(jsonMetadata: any): Promise<{ ipfsUrl: string; contentHash: string }> {
@@ -29,42 +51,23 @@ export async function uploadJSONToIPFS(jsonMetadata: any): Promise<{ ipfsUrl: st
     throw new Error(`IPFS upload failed: ${error instanceof Error ? error.message : "Unknown error"}`)
   }
 }
-// function to be implemented soon->>>>>>>>
-// export async function fetchImageUrl(cid:any){
-//     try {
-//     let p=await createPinataClient();
-//       const url = await p.gateways.createSignedURL({
-//         gateway:"violet-wrong-herring-709.mypinata.cloud",
-//          cid: cid,
-//           expires: 1800000000000,
-//       })
-//       console.log(url);
-//       return url;
-  
-//     } catch (error) {
-//       console.log(error);
-//       return "";
-//     }
-  
-//   }
-export async function uploadFileToIPFS(file: File): Promise<{ ipfsUrl: string; contentHash: string }> {
+export async function uploadFileToIPFS(file: File): Promise<{ ipfsUrl: string; cid: string }> {
   const pinata = new PinataSDK({
-    pinataJwt: process.env.NEXT_PUBLIC_PINATA_JWT!,
-    pinataGateway: "example-gateway.mypinata.cloud",
+    pinataJwt: process.env.NEXT_PUBLIC_PINATA_KEY!,
+    pinataGateway: "jade-added-egret-280.mypinata.cloud",
   });
   
   try {
-    const  IpfsHash  = await pinata.upload.file(file)
+    const uploadResult = await pinata.upload.file(file);
     
-    // Create content hash from file buffer
-    console.log("My IPFS Hash Coming From Pinata Storage is::::",IpfsHash);    
+    console.log("IPFS Hash from Pinata:", uploadResult.cid);
     
     return {
-      ipfsUrl: `https://ipfs.io/ipfs/${IpfsHash.cid}`,
-      contentHash: `0xxx`,
-    }
+      ipfsUrl: `ipfs://${uploadResult.cid}`,
+      cid: uploadResult.cid,
+    };
   } catch (error) {
-    console.error("Failed to upload file to IPFS:", error)
-    throw new Error(`IPFS upload failed: ${error instanceof Error ? error.message : "Unknown error"}`)
+    console.error("Failed to upload file to IPFS:", error);
+    throw new Error(`IPFS upload failed: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 }

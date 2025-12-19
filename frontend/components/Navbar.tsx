@@ -35,7 +35,7 @@ export default function Navbar() {
   }, []);
 
   return (
-    <header id="siteHeader" className="fixed top-0 z-50 w-full transition-all duration-300 bg-transparent text-white">
+    <header id="siteHeader" className="fixed top-0 z-50 w-full transition-all duration-300 bg-transparent text-white mb-28">
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
@@ -46,9 +46,9 @@ export default function Navbar() {
 
           {/* Desktop Nav */}
           <nav className="hidden lg:flex items-center gap-8 text-sm font-medium">
-            <Link href="/listnft" className="nav-link">NFT's</Link>
+            <Link href="/nftlist" className="nav-link">Marketplace</Link>
+            <Link href="/mynfts" className="nav-link">My NFTs</Link>
             <Link href="/createnft" className="nav-link">Create NFT</Link>
-            <Link href="/nftlist" className="nav-link">Items</Link>
             <Link href="#" className="nav-link underline underline-offset-4">Quickstart</Link>
 
             {/* Inline Search */}

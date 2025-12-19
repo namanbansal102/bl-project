@@ -5,9 +5,11 @@ import Image from 'next/image';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { parseEther } from 'viem';
 import { NFT_CONTRACT_ADDRESS, NFT_CONTRACT_ABI } from '@/lib/contract';
+import { uploadFileToIPFS } from '@/lib/pinata';
 
 export default function CreateNFT() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     price: '',
@@ -27,6 +29,7 @@ export default function CreateNFT() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setSelectedFile(file);
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
     }
@@ -35,6 +38,7 @@ export default function CreateNFT() {
   const removeImage = (e: React.MouseEvent) => {
     e.stopPropagation();
     setPreviewUrl(null);
+    setSelectedFile(null);
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     if (fileInput) fileInput.value = '';
   };
@@ -81,13 +85,22 @@ export default function CreateNFT() {
     try {
       setIsLoading(true);
 
-      // For now, use a dummy image hash
-      // TODO: Integrate Pinata storage later
-      const dummyImageHash = `ipfs://dummy-hash-${Date.now()}`;
+      // Upload image to Pinata
+      if (!selectedFile) {
+        setError('Please select an image file');
+        setIsLoading(false);
+        return;
+      }
+
+      setSuccess('Uploading image to Pinata...');
+      const { ipfsUrl, cid } = await uploadFileToIPFS(selectedFile);
+      console.log('Image uploaded to Pinata. CID:', cid);
+      console.log('IPFS URL:', ipfsUrl);
       
       const priceInWei = parseEther(formData.price);
 
-      // Call the createNFT function
+      setSuccess('Creating NFT on blockchain...');
+      // Call the createNFT function with the IPFS URL
       writeContract({
         address: NFT_CONTRACT_ADDRESS,
         abi: NFT_CONTRACT_ABI,
@@ -95,7 +108,7 @@ export default function CreateNFT() {
         args: [
           formData.title,
           formData.description,
-          dummyImageHash,
+          ipfsUrl, // Use the IPFS URL with CID from Pinata
           priceInWei,
           BigInt(royaltiesNum)
         ],
@@ -122,6 +135,7 @@ export default function CreateNFT() {
       royalties: ''
     });
     setPreviewUrl(null);
+    setSelectedFile(null);
   }
 
   return (

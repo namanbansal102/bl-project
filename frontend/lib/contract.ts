@@ -2,7 +2,7 @@ import { Address } from 'viem';
 import contractABI from './abi.json';
 
 // Replace this with your deployed contract address
-export const NFT_CONTRACT_ADDRESS: Address = '0xa6b93C838A14cD976c9C7f625511477E037EffE4'; // TODO: Update after deployment
+export const NFT_CONTRACT_ADDRESS: Address = '0xF49845410DA13B0dd3FD56Fa483F7E5fbe8D184c'; // TODO: Update  after deployment
 
 export const NFT_CONTRACT_ABI = contractABI;
 

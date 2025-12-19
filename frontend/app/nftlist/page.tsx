@@ -148,6 +148,8 @@ import Link from 'next/link';
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { formatEther, parseEther } from 'viem';
 import { NFT_CONTRACT_ADDRESS, NFT_CONTRACT_ABI, type NFT } from '@/lib/contract';
+import { fetchImageUrl } from '@/lib/pinata';
+import Navbar from '@/components/Navbar';
 
 type FilterType = 'All NFTs' | 'Owned' | 'Listed';
 
@@ -157,6 +159,7 @@ export default function NFTList() {
   const [selectedNFT, setSelectedNFT] = useState<NFT | null>(null);
   const [listPrice, setListPrice] = useState('');
   const [showListModal, setShowListModal] = useState(false);
+  const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
 
   const { address, isConnected } = useAccount();
 
@@ -198,6 +201,37 @@ export default function NFTList() {
       setSelectedNFT(null);
     }
   }, [isConfirmed]);
+
+  // Fetch image URLs from Pinata for all NFTs
+  useEffect(() => {
+    const fetchImages = async () => {
+      const displayNFTs = getDisplayNFTs();
+      const newImageUrls: Record<string, string> = {};
+      
+      for (const nft of displayNFTs) {
+        const imageHash = nft.imageHash;
+        // Extract CID from ipfs:// URL
+        if (imageHash.startsWith('ipfs://')) {
+          const cid = imageHash.replace('ipfs://', '');
+          try {
+            const signedUrl = await fetchImageUrl(cid);
+            if (signedUrl) {
+              newImageUrls[nft.id.toString()] = signedUrl;
+            }
+          } catch (error) {
+            console.error(`Error fetching image for NFT ${nft.id}:`, error);
+          }
+        } else if (imageHash.startsWith('http')) {
+          // Use the URL directly if it's already an HTTP URL
+          newImageUrls[nft.id.toString()] = imageHash;
+        }
+      }
+      
+      setImageUrls(prev => ({ ...prev, ...newImageUrls }));
+    };
+    
+    fetchImages();
+  }, [allNFTs, myNFTs, forSaleNFTs, selectedFilter]);
 
   const getDisplayNFTs = (): NFT[] => {
     if (selectedFilter === 'All NFTs') {
@@ -261,6 +295,20 @@ export default function NFTList() {
     return isConnected && address?.toLowerCase() === nft.currentOwner.toLowerCase();
   };
 
+  const getImageUrl = (nft: NFT): string => {
+    // First, check if we have a signed URL from Pinata
+    const signedUrl = imageUrls[nft.id.toString()];
+    if (signedUrl) return signedUrl;
+    
+    // Fallback to direct IPFS gateway
+    if (nft.imageHash.startsWith('ipfs://')) {
+      return nft.imageHash.replace('ipfs://', 'https://ipfs.io/ipfs/');
+    }
+    
+    // Return as-is if it's already an HTTP URL
+    return nft.imageHash;
+  };
+
   const displayNFTs = getDisplayNFTs();
   const isLoading = loadingAll || loadingMy || loadingForSale;
 
@@ -274,102 +322,7 @@ export default function NFTList() {
       <div className="fixed w-80 h-80 bg-pink-500 top-1/2 left-1/2 rounded-full blur-[100px] opacity-30 pointer-events-none z-0 animate-[float_3s_ease-in-out_infinite] [animation-delay:-4s]" />
 
       {/* HEADER */}
-      <header className="border-b border-white/10 backdrop-blur-xl bg-slate-900/60 z-20 sticky top-0">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          {/* Logo */}
-          <div className="flex items-center gap-3 font-serif text-2xl">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-2xl">
-              🌟
-            </div>
-            <span>
-              <Link href="/" className="hover:text-indigo-400 transition-colors">
-                Mint<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">Verse</span>
-              </Link>
-            </span>
-          </div>
-
-          {/* Right Side: Stats, Filter, Sort, Create, Wallet */}
-          <div className="flex items-center gap-4">
-            {/* Quick Stats */}
-            <div className="hidden lg:flex items-center gap-4 text-sm mr-2">
-              <div className="flex items-center gap-2">
-                <span className="text-white/50">Volume:</span>
-                <span className="font-bold text-indigo-400">840 ETH</span>
-              </div>
-              <div className="w-px h-4 bg-white/10" />
-              <div className="flex items-center gap-2">
-                <span className="text-white/50">Floor:</span>
-                <span className="font-bold text-purple-400">0.15 ETH</span>
-              </div>
-              <div className="w-px h-4 bg-white/10" />
-              <div className="flex items-center gap-2">
-                <span className="text-white/50">Items:</span>
-                <span className="font-bold text-pink-400">{displayNFTs.length}</span>
-              </div>
-            </div>
-
-            {/* Filter Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setFilterMenuOpen(!filterMenuOpen)}
-                className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/15 rounded-lg font-medium transition-all text-sm border border-white/10"
-              >
-                <span>{selectedFilter}</span>
-                <svg
-                  className={`w-4 h-4 transition-transform duration-200 ${filterMenuOpen ? 'rotate-180' : ''}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-
-              {/* Dropdown Menu */}
-              {filterMenuOpen && (
-                <div className="absolute top-full mt-2 right-0 w-40 bg-slate-800/95 backdrop-blur-xl rounded-lg border border-white/10 shadow-xl overflow-hidden">
-                  {filterOptions.map((option) => (
-                    <button
-                      key={option}
-                      onClick={() => {
-                        setSelectedFilter(option);
-                        setFilterMenuOpen(false);
-                      }}
-                      className={`w-full px-4 py-2.5 text-left hover:bg-white/10 transition-colors text-sm font-medium border-b border-white/5 last:border-b-0 ${
-                        selectedFilter === option ? 'bg-indigo-500/20' : ''
-                      }`}
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Sort Dropdown */}
-            <select className="bg-white/10 text-white px-4 py-2 rounded-lg text-sm font-medium border border-white/10 hover:border-indigo-400 focus:border-indigo-400 focus:outline-none transition-all cursor-pointer">
-              <option value="recent" className="bg-slate-800 text-white">Recently Minted</option>
-              <option value="low" className="bg-slate-800 text-white">Price: Low to High</option>
-              <option value="high" className="bg-slate-800 text-white">Price: High to Low</option>
-            </select>
-
-            {/* Create Button */}
-            <Link
-              href="/createnft"
-              className="px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 transition-all font-medium shadow-lg hover:shadow-indigo-500/50 hover:scale-105 text-sm flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-              </svg>
-              Create
-            </Link>
-
-            {/* Wallet Button */}
-            <w3m-button />
-          </div>
-        </div>
-      </header>
-
+    <Navbar></Navbar>
       {/* MAIN CONTENT */}
       <main className="relative z-10">
         {/* Hero Section */}
@@ -419,7 +372,7 @@ export default function NFTList() {
                   >
                     {nft.imageHash.startsWith('ipfs://') || nft.imageHash.startsWith('http') ? (
                       <img
-                        src={nft.imageHash.replace('ipfs://', 'https://ipfs.io/ipfs/')}
+                        src={getImageUrl(nft)}
                         alt={nft.name}
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 group-hover:rotate-2"
                       />
@@ -534,7 +487,7 @@ export default function NFTList() {
               <div className="rounded-xl overflow-hidden">
                 {selectedNFT.imageHash.startsWith('ipfs://') || selectedNFT.imageHash.startsWith('http') ? (
                   <img 
-                    src={selectedNFT.imageHash.replace('ipfs://', 'https://ipfs.io/ipfs/')} 
+                    src={getImageUrl(selectedNFT)} 
                     alt={selectedNFT.name}
                     className="w-full h-full object-cover" 
                   />
